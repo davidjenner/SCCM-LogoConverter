@@ -2,54 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Logo Converter</title>
+  <title>Logo Converter Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: white;
       text-align: center;
       padding: 40px;
     }
 
     .container {
-      background: white;
+      background: #111827;
       padding: 30px;
-      border-radius: 12px;
-      max-width: 500px;
+      border-radius: 16px;
+      max-width: 520px;
       margin: auto;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
     }
 
     h1 {
       margin-bottom: 10px;
+      font-size: 26px;
     }
 
     p {
-      color: #444;
+      color: #cbd5f5;
+      font-size: 14px;
     }
 
-    a {
-      color: blue;
-      margin: 0 10px;
+    .links a {
+      color: #60a5fa;
+      margin: 0 8px;
+      text-decoration: none;
+    }
+
+    .upload-box {
+      margin-top: 20px;
+      padding: 25px;
+      border: 2px dashed #334155;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .upload-box:hover {
+      background: #1e293b;
+    }
+
+    input {
+      display: none;
     }
 
     button {
-      margin-top: 20px;
-      padding: 15px 25px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
+      margin-top: 15px;
+      padding: 12px 20px;
+      font-size: 14px;
       border-radius: 8px;
-      background: #0078d4;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
       color: white;
     }
 
-    .success {
+    .btn-secondary {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-secondary:disabled {
+      background: #374151;
+      cursor: not-allowed;
+    }
+
+    .preview {
       margin-top: 20px;
-      color: green;
-      font-size: 18px;
+    }
+
+    img {
+      max-width: 200px;
+      border-radius: 8px;
+      background: white;
+      padding: 5px;
+    }
+
+    .success {
+      margin-top: 15px;
+      color: #22c55e;
       display: none;
     }
   </style>
@@ -57,82 +101,108 @@
 
 <body>
   <div class="container">
-    <h1>Logo Converter</h1>
+    <h1>⚡ Logo Converter Pro</h1>
+    <p>Convert any logo into 256px and 512px PNGs instantly.</p>
 
-    <p>
-      Upload any logo image and convert it to 256x256 and 512x512 PNGs
-      ready for SCCM packaging.
-    </p>
-
-    <p>
-      For logos:
-      <a href="https://www.1000logos.net/" target="_blank">1000logos</a>
-      |
+    <div class="links">
+      <a href="https://www.1000logos.net/" target="_blank">1000logos</a> |
       <a href="https://seeklogo.com/" target="_blank">seeklogo</a>
-    </p>
+    </div>
 
-    <input type="file" id="fileInput" accept="image/*" />
-    <br />
-    <button onclick="processImage()">Convert Image</button>
+    <label class="upload-box" id="dropZone">
+      Click or drag an image here
+      <input type="file" id="fileInput" accept="image/*" />
+    </label>
+
+    <div class="preview" id="preview"></div>
+
+    <div>
+      <button class="btn-secondary" id="download256" disabled>Download 256x256</button>
+      <button class="btn-primary" id="download512" disabled>Download 512x512</button>
+    </div>
 
     <div class="success" id="successMsg">
-      Success! Your PNGs have been downloaded.
+      Ready to download 🚀
     </div>
   </div>
 
   <script>
-    function resizeAndDownload(img, size, filename) {
+    let uploadedImage = null;
+    let fileName = "image";
+
+    const fileInput = document.getElementById("fileInput");
+    const preview = document.getElementById("preview");
+    const dropZone = document.getElementById("dropZone");
+
+    const btn256 = document.getElementById("download256");
+    const btn512 = document.getElementById("download512");
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.style.background = "#1e293b";
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.style.background = "transparent";
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener("change", () => {
+      handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(file) {
+      if (!file) return;
+
+      fileName = file.name.split(".")[0];
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        uploadedImage = new Image();
+        uploadedImage.src = e.target.result;
+
+        uploadedImage.onload = () => {
+          preview.innerHTML = `<img src="${uploadedImage.src}" />`;
+
+          btn256.disabled = false;
+          btn512.disabled = false;
+
+          document.getElementById("successMsg").style.display = "block";
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resize(size) {
       const canvas = document.createElement("canvas");
       canvas.width = size;
       canvas.height = size;
 
       const ctx = canvas.getContext("2d");
 
-      // Fill white background
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, size, size);
 
-      // Maintain aspect ratio
-      const scale = Math.min(size / img.width, size / img.height);
-      const newWidth = img.width * scale;
-      const newHeight = img.height * scale;
+      const scale = Math.min(size / uploadedImage.width, size / uploadedImage.height);
+      const w = uploadedImage.width * scale;
+      const h = uploadedImage.height * scale;
 
-      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+      ctx.drawImage(uploadedImage, 0, 0, w, h);
 
-      // Download
       const link = document.createElement("a");
-      link.download = `${filename}.${size}x${size}.png`;
+      link.download = `${fileName}.${size}x${size}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     }
 
-    function processImage() {
-      const fileInput = document.getElementById("fileInput");
-      const file = fileInput.files[0];
-
-      if (!file) {
-        alert("Please upload an image first.");
-        return;
-      }
-
-      const img = new Image();
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-        img.src = e.target.result;
-      };
-
-      img.onload = function () {
-        const name = file.name.split(".")[0];
-
-        resizeAndDownload(img, 512, name);
-        resizeAndDownload(img, 256, name);
-
-        document.getElementById("successMsg").style.display = "block";
-      };
-
-      reader.readAsDataURL(file);
-    }
+    btn256.addEventListener("click", () => resize(256));
+    btn512.addEventListener("click", () => resize(512));
   </script>
 </body>
 </html>
