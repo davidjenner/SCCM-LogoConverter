@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Logo Converter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #444;
+    }
+
+    a {
+      color: blue;
+      margin: 0 10px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 15px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background: #0078d4;
+      color: white;
+    }
+
+    .success {
+      margin-top: 20px;
+      color: green;
+      font-size: 18px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Logo Converter</h1>
+
+    <p>
+      Upload any logo image and convert it to 256x256 and 512x512 PNGs
+      ready for SCCM packaging.
+    </p>
+
+    <p>
+      For logos:
+      <a href="https://www.1000logos.net/" target="_blank">1000logos</a>
+      |
+      <a href="https://seeklogo.com/" target="_blank">seeklogo</a>
+    </p>
+
+    <input type="file" id="fileInput" accept="image/*" />
+    <br />
+    <button onclick="processImage()">Convert Image</button>
+
+    <div class="success" id="successMsg">
+      Success! Your PNGs have been downloaded.
+    </div>
+  </div>
+
+  <script>
+    function resizeAndDownload(img, size, filename) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+
+      const ctx = canvas.getContext("2d");
+
+      // Fill white background
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, size, size);
+
+      // Maintain aspect ratio
+      const scale = Math.min(size / img.width, size / img.height);
+      const newWidth = img.width * scale;
+      const newHeight = img.height * scale;
+
+      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+      // Download
+      const link = document.createElement("a");
+      link.download = `${filename}.${size}x${size}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    function processImage() {
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please upload an image first.");
+        return;
+      }
+
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        img.src = e.target.result;
+      };
+
+      img.onload = function () {
+        const name = file.name.split(".")[0];
+
+        resizeAndDownload(img, 512, name);
+        resizeAndDownload(img, 256, name);
+
+        document.getElementById("successMsg").style.display = "block";
+      };
+
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
